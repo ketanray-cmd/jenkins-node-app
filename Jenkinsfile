@@ -5,7 +5,7 @@ pipeline {
     environment {
         DOCKER_USER = credentials('dockerhub-creds').username
         DOCKER_PASS = credentials('dockerhub-creds').password
-        IMAGE = "dockeruser881/jenkins-node-app"
+        IMAGE = "yourdockerhubusername/jenkins-node-app"
     }
 
     stages {
@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/dockeruser881/jenkins-node-app.git'
+                    url: 'https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME.git'
             }
         }
 
@@ -53,3 +53,4 @@ pipeline {
         }
     }
 }
+
