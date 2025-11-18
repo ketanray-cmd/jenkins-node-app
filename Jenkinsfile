@@ -1,56 +1,102 @@
 pipeline {
-
     agent any
-
-    environment {
-        DOCKER_USER = credentials('dockerhub-creds').username
-        DOCKER_PASS = credentials('dockerhub-creds').password
-        IMAGE = "yourdockerhubusername/jenkins-node-app"
-    }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME.git'
+                git branch: 'main', url: 'https://github.com/ketanray-cmd/jenkins-node-app.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE:latest .'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+
+                        sh """
+                            echo "Building Docker Image..."
+                            docker build -t $DOCKER_USER/nodeapp:latest .
+                        """
+                    }
+                }
             }
         }
 
-        stage('Test') {
+        stage('Docker Login & Push') {
             steps {
-                sh 'npm test'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+
+                        sh """
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker push $DOCKER_USER/nodeapp:latest
+                        """
+                    }
+                }
             }
         }
 
-        stage('Login to DockerHub') {
+        stage('Deploy Container Locally') {
             steps {
-                sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                '''
-            }
-        }
-
-        stage('Push to DockerHub') {
-            steps {
-                sh 'docker push $IMAGE:latest'
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                    docker rm -f nodeapp || true
-                    docker run -d -p 3000:3000 --name nodeapp $IMAGE:latest
-                '''
+                script {
+                    sh """
+                        docker rm -f nodeapp || true
+                        docker run -d --name nodeapp -p 3000:3000 $DOCKER_USER/nodeapp:latest
+                    """
+                }
             }
         }
     }
 }
+pipeline {
+    agent any
 
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ketanray-cmd/jenkins-node-app.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+
+                        sh """
+                            echo "Building Docker Image..."
+                            docker build -t $DOCKER_USER/nodeapp:latest .
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Login & Push') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+
+                        sh """
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker push $DOCKER_USER/nodeapp:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Container Locally') {
+            steps {
+                script {
+                    sh """
+                        docker rm -f nodeapp || true
+                        docker run -d --name nodeapp -p 3000:3000 $DOCKER_USER/nodeapp:latest
+                    """
+                }
+            }
+        }
+    }
+}
