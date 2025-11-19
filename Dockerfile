@@ -1,20 +1,15 @@
 # Use official Node image
 FROM node:18
-
-# Set working directory
+#
 WORKDIR /app
-
-# Copy package files
+#
 COPY package*.json ./
 
-# Install dependencies
+#dfs
 RUN npm install
 
-# Copy app files
-COPY . .
-
-# Expose app port
+COPY . .   
+#
 EXPOSE 3000
-
-# Start app
+#
 CMD ["npm", "start"]
