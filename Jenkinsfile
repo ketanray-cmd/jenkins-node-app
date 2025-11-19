@@ -1,16 +1,21 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)     // Prevent Jenkins auto-checkout that causes false SCM triggers
+    }
+
+    triggers {
+        pollSCM('H/2 * * * *')        // Poll GitHub every 2 mins, build ONLY if commit changed
+    }
+
     stages {
 
         stage('Checkout') {
             steps {
-             git url: 'https://github.com/ketanray-cmd/jenkins-node-app.git',
-           	 branch: 'main',
-           	 changelog: true,
-           	 poll: true   
-	  
-	        }
+                deleteDir()           // Clean workspace to avoid false change detection
+                checkout scm
+            }
         }
 
         stage('Build Docker Image') {
@@ -24,11 +29,13 @@ pipeline {
 
         stage('Docker Login & Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                                                  usernameVariable: 'USER',
-                                                  passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
                     script {
-                        sh "echo $PASS | docker login -u $USER --password-stdin"
+                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
                         sh "docker push dockeruser881/nodeapp:latest"
                     }
                 }
