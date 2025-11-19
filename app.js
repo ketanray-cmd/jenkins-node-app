@@ -1,11 +1,13 @@
-const express = require('express');
+const express = require("express");
+const path = require("path");
+
+app.use(express.static("public"));
+
 const app = express();
-const port = 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello from Jenkins CI/CD Pipeline with Node.js + Docker!');
-});
+// serve public folder
+app.use(express.static(path.join(__dirname, "public")));
 
-app.listen(port, () => {
-  console.log(`App running on port ${port}`);
-});
+
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
