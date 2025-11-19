@@ -5,8 +5,12 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ketanray-cmd/jenkins-node-app.git'
-            }
+             git url: 'https://github.com/ketanray-cmd/jenkins-node-app.git',
+           	 branch: 'main',
+           	 changelog: true,
+           	 poll: true   
+	  
+	        }
         }
 
         stage('Build Docker Image') {
